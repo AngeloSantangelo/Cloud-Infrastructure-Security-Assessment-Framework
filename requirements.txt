@@ -1,0 +1,9 @@
+azure-identity>=1.12.0
+azure-mgmt-resource>=20.0.0
+azure-mgmt-storage>=20.0.0
+azure-mgmt-keyvault>=5.0.0
+azure-mgmt-network>=22.0.0
+azure-mgmt-web>=3.0.0
+azure-mgmt-sql>=2.0.0
+azure-mgmt-containerregistry>=8.0.0
+azure-mgmt-cosmosdb>=8.0.0
