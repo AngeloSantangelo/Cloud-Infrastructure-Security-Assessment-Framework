@@ -1,0 +1,169 @@
+
+# rules.yaml — Starter pack con Rationale e References (descrizione + link)
+rules:
+  - id: appservice-https-only
+    description: "App Service deve forzare HTTPS"
+    resource_type: Microsoft.Web/sites
+    severity: High
+    rationale: "Senza HTTPS il traffico può essere intercettato/manomesso; baseline MCSB richiede HTTPS by default."
+    references:
+      - "Microsoft Cloud Security Benchmark - App Service baseline: https://learn.microsoft.com/security/benchmark/azure/baselines/app-service-security-baseline"
+    select:
+      https_only: $.raw.properties.httpsOnly
+    where:
+      equals: { left: "$.https_only", right: false }
+    message: "HTTPS non forzato"
+
+  - id: appservice-ftps-only-or-disabled
+    description: "FTP non deve essere 'AllAllowed' (consentire solo FTPS o disabilitare)"
+    resource_type: Microsoft.Web/sites
+    severity: Medium
+    rationale: "FTP in chiaro espone credenziali e contenuti; usare FTPS o disabilitare."
+    references:
+      - "Azure Policy built-in / CIS mapping per FTPS Only: https://learn.microsoft.com/azure/app-service/policy-reference"
+      - "Guida App Service - Abilitare FTPS/Disabilitare FTP: https://learn.microsoft.com/azure/app-service/deploy-ftp"
+    select:
+      ftps_state: $.raw.properties.ftpsState
+    where:
+      equals: { left: "$.ftps_state", right: "AllAllowed" }
+    message: "FTP non sicuro abilitato (AllAllowed)"
+
+  - id: storage-minimum-tls-1_2
+    description: "Storage Account deve avere Minimum TLS >= 1.2"
+    resource_type: Microsoft.Storage/storageAccounts
+    severity: High
+    rationale: "TLS < 1.2 è deprecato; Microsoft richiede/consiglia TLS 1.2 come minimo."
+    references:
+      - "Azure Storage - Configurare la minimum TLS version: https://learn.microsoft.com/azure/storage/common/transport-layer-security-configure-minimum-version"
+      - "Azure Storage - Migrazione a TLS 1.2: https://learn.microsoft.com/azure/storage/common/transport-layer-security-configure-migrate-to-tls2"
+    select:
+      tls: $.raw.properties.minimumTlsVersion
+    where:
+      not_in: { left: "$.tls", right: ["TLS1_2", "TLS1_3"] }
+    message: "Minimum TLS < 1.2 o non configurato"
+
+  - id: storage-secure-transfer-required
+    description: "Richiedere secure transfer (HTTPS) per Storage"
+    resource_type: Microsoft.Storage/storageAccounts
+    severity: High
+    rationale: "Richiedere HTTPS rifiuta le richieste HTTP non cifrate."
+    references:
+      - "Azure Storage - Require secure transfer: https://learn.microsoft.com/azure/storage/common/storage-require-secure-transfer"
+      - "Security recommendations for Blob Storage: https://learn.microsoft.com/azure/storage/blobs/security-recommendations"
+    select:
+      https_only: $.raw.properties.supportsHttpsTrafficOnly
+    where:
+      equals: { left: "$.https_only", right: false }
+    message: "Secure transfer non richiesto"
+
+  - id: storage-disable-blob-anonymous
+    description: "Disabilitare l'accesso anonimo a Blob"
+    resource_type: Microsoft.Storage/storageAccounts
+    severity: High
+    rationale: "L'anonimo può esporre dati pubblicamente per errore; va disabilitato di default."
+    references:
+      - "Blob Storage - Configurare l'accesso anonimo: https://learn.microsoft.com/azure/storage/blobs/anonymous-read-access-configure"
+      - "Blob Storage - Prevenire l'accesso anonimo: https://learn.microsoft.com/azure/storage/blobs/anonymous-read-access-prevent"
+    select:
+      allow_public: $.raw.properties.allowBlobPublicAccess
+    where:
+      equals: { left: "$.allow_public", right: true }
+    message: "Blob anonimo abilitato"
+
+  - id: storage-public-blob-containers
+    description: "Storage accounts con container Blob pubblici"
+    resource_type: Microsoft.Storage/storageAccounts
+    severity: High
+    rationale: "Consentire container pubblici espone i dati su Internet; raccomandato prevenire/limitare."
+    references:
+      - "Blob Storage - Prevenire l'accesso pubblico ai container: https://learn.microsoft.com/azure/storage/blobs/anonymous-read-access-prevent"
+      - "Blob Storage - Configurare accesso anonimo: https://learn.microsoft.com/azure/storage/blobs/anonymous-read-access-configure"
+    # Nota: questa regola identifica l'abilitazione del public access a livello di account.
+    # Per controllare container specifici servono le API Data Plane.
+    select:
+      allow_public: $.raw.properties.allowBlobPublicAccess
+    where:
+      equals: { left: "$.allow_public", right: true }
+    message: "L'account consente container pubblici (verificare i container)"
+
+  - id: nsg-no-internet-admin-ports
+    description: "NSG non deve consentire Internet -> porte amministrative comuni"
+    resource_type: Microsoft.Network/networkSecurityGroups
+    severity: High
+    rationale: "Esposizione diretta di porte admin (SSH/RDP/DB) a Internet aumenta drasticamente il rischio di compromissione."
+    references:
+      - "Panoramica e raccomandazioni NSG: https://learn.microsoft.com/azure/virtual-network/network-security-groups-overview"
+    select:
+      rules: $.raw.properties.securityRules[*].properties
+    where:
+      any:
+        - all:
+            - equals:  { left: "$.rules.direction", right: "Inbound" }
+            - equals:  { left: "$.rules.access",    right: "Allow" }
+            - in:      { left: "$.rules.sourceAddressPrefix", right: ["*", "0.0.0.0/0", "Internet"] }
+            - regex:   { left: "$.rules.destinationPortRange", right: "(^|,)(22|3389|1433|3306|5432|9200)(-|,|$)" }
+    message: "Porte admin esposte a Internet"
+
+  - id: sql-fw-allow-all
+    description: "SQL firewall non deve avere 0.0.0.0-255.255.255.255"
+    resource_type: Microsoft.Sql/servers/firewallRules
+    severity: High
+    rationale: "Regola 'allow all' espone il DB a Internet; rischio critico di compromissione/esfiltrazione."
+    references:
+      - "Azure SQL - Configurare le firewall rules: https://learn.microsoft.com/azure/azure-sql/database/firewall-configure?view=azuresql"
+    select:
+      start: $.raw.properties.startIpAddress
+      end:   $.raw.properties.endIpAddress
+    where:
+      all:
+        - equals: { left: "$.start", right: "0.0.0.0" }
+        - equals: { left: "$.end",   right: "255.255.255.255" }
+    message: "Firewall 'allow all' presente"
+
+  - id: sql-fw-allow-azure-services-review
+    description: "Valutare la regola 'Allow Azure services' (0.0.0.0-0.0.0.0)"
+    resource_type: Microsoft.Sql/servers/firewallRules
+    severity: Medium
+    rationale: "Consente accesso da tutti i servizi Azure; può risultare troppo permissiva in alcuni contesti."
+    references:
+      - "Azure SQL - Spiegazione della regola 'Allow Azure Services': https://learn.microsoft.com/azure/azure-sql/database/firewall-configure?view=azuresql"
+      - "Quickstart portal - creare regole firewall: https://learn.microsoft.com/azure/azure-sql/database/firewall-create-server-level-portal-quickstart?view=azuresql"
+    select:
+      start: $.raw.properties.startIpAddress
+      end:   $.raw.properties.endIpAddress
+    where:
+      all:
+        - equals: { left: "$.start", right: "0.0.0.0" }
+        - equals: { left: "$.end",   right: "0.0.0.0" }
+    message: "Regola 'Allow Azure services' attiva — verificare necessità"
+
+  - id: keyvault-disable-public-network
+    description: "Key Vault deve disabilitare l'accesso da rete pubblica (usare Private Endpoint)"
+    resource_type: Microsoft.KeyVault/vaults
+    severity: High
+    rationale: "Accesso pubblico al Key Vault aumenta superficie d'attacco e rischio di data leakage."
+    references:
+      - "Azure Policy built-in - PNA should be disabled: https://learn.microsoft.com/azure/key-vault/policy-reference"
+      - "Microsoft Cloud Security Benchmark - Key Vault baseline: https://learn.microsoft.com/security/benchmark/azure/baselines/key-vault-security-baseline"
+    select:
+      pna: $.raw.properties.publicNetworkAccess
+    where:
+      not_in: { left: "$.pna", right: ["Disabled"] }
+    message: "Public Network Access non disabilitato"
+
+  - id: keyvault-purge-protection-enabled
+    description: "Key Vault deve avere purge protection (e soft-delete) abilitati"
+    resource_type: Microsoft.KeyVault/vaults
+    severity: High
+    rationale: "Previene la cancellazione definitiva di chiavi/segreti; requisito comune di compliance e forensics."
+    references:
+      - "CIS Microsoft Azure Foundations - Key Vault purge protection: https://workbench.cisecurity.org/benchmarks/1267"
+      - "Azure Key Vault - Soft delete & purge protection: https://learn.microsoft.com/azure/key-vault/general/soft-delete-overview"
+    select:
+      purge: $.raw.properties.enablePurgeProtection
+      soft:  $.raw.properties.enableSoftDelete
+    where:
+      any:
+        - equals: { left: "$.purge", right: false }
+        - equals: { left: "$.soft",  right: false }
+    message: "Purge protection o soft-delete non abilitati"
