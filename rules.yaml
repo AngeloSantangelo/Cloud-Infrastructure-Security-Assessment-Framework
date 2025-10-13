@@ -1,3 +1,5 @@
+
+# rules.yaml — Starter pack con Rationale e References (descrizione + link)
 rules:
   - id: appservice-https-only
     description: "App Service deve forzare HTTPS"
@@ -14,7 +16,7 @@ rules:
 
   - id: appservice-ftps-only-or-disabled
     description: "FTP non deve essere 'AllAllowed' (consentire solo FTPS o disabilitare)"
-    resource_type: Microsoft.Web/sites
+    resource_type: Microsoft.Web/sites/config
     severity: Medium
     rationale: "FTP in chiaro espone credenziali e contenuti; usare FTPS o disabilitare."
     references:
@@ -76,8 +78,6 @@ rules:
     references:
       - "Blob Storage - Prevenire l'accesso pubblico ai container: https://learn.microsoft.com/azure/storage/blobs/anonymous-read-access-prevent"
       - "Blob Storage - Configurare accesso anonimo: https://learn.microsoft.com/azure/storage/blobs/anonymous-read-access-configure"
-    # Nota: questa regola identifica l'abilitazione del public access a livello di account.
-    # Per controllare container specifici servono le API Data Plane.
     select:
       allow_public: $.raw.properties.allowBlobPublicAccess
     where:
@@ -94,12 +94,14 @@ rules:
     select:
       rules: $.raw.properties.securityRules[*].properties
     where:
-      any:
-        - all:
-            - equals:  { left: "$.rules.direction", right: "Inbound" }
-            - equals:  { left: "$.rules.access",    right: "Allow" }
-            - in:      { left: "$.rules.sourceAddressPrefix", right: ["*", "0.0.0.0/0", "Internet"] }
-            - regex:   { left: "$.rules.destinationPortRange", right: "(^|,)(22|3389|1433|3306|5432|9200)(-|,|$)" }
+      any_item:
+        in: "$.rules"
+        satisfy:
+          all:
+            - equals:  { left: "$.direction", right: "Inbound" }
+            - equals:  { left: "$.access",    right: "Allow" }
+            - in:      { left: "$.sourceAddressPrefix", right: ["*", "0.0.0.0/0", "Internet"] }
+            - regex:   { left: "$.destinationPortRange", right: "(^|,)?(22|3389|80|1433)(-|,|$)" }
     message: "Porte admin esposte a Internet"
 
   - id: sql-fw-allow-all

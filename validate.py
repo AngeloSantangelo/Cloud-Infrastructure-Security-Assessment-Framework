@@ -1,13 +1,13 @@
-
-# validate.py — Valida regole YAML statiche su inventory.json
+# validate.py — Valida regole YAML statiche su inventory.json (con any_item)
 # Requisiti:
 #   pip install jsonpath-ng pyyaml
 #
 # Uso:
 #   python validate.py ./inventory.json ./rules.yaml ./report.json
 import json, sys, re, yaml
-from jsonpath_ng import parse as jp
+from jsonpath_ng.ext import parse as jp  # parser esteso (serve per JSONPath base)
 
+# Operatori base
 OP = {
     "equals":       lambda v, w: v == w,
     "not_equals":   lambda v, w: v != w,
@@ -23,6 +23,7 @@ OP = {
 }
 
 def jget(obj, expr):
+    """Valuta una JSONPath sull'oggetto (ritorna singolo valore o lista, o None se vuoto)."""
     if not expr:
         return None
     matches = [m.value for m in jp(expr).find(obj)]
@@ -30,18 +31,41 @@ def jget(obj, expr):
         return None
     return matches[0] if len(matches) == 1 else matches
 
-def eval_clause(locals_dict, clause):
+def eval_clause_on(obj, clause):
+    """Valuta una clausola (any/all/not/operator) su obj, dove i riferimenti '$.' sono relativi a obj."""
     if "any" in clause:
-        return any(eval_clause(locals_dict, c) for c in clause["any"])
+        return any(eval_clause_on(obj, c) for c in clause["any"])
     if "all" in clause:
-        return all(eval_clause(locals_dict, c) for c in clause["all"])
+        return all(eval_clause_on(obj, c) for c in clause["all"])
     if "not" in clause:
-        return not eval_clause(locals_dict, clause["not"])
+        return not eval_clause_on(obj, clause["not"])
+
+    # Operatore binario
     (op_name, args), = clause.items()
     left = args.get("left"); right = args.get("right")
-    lv = jget(locals_dict, left) if isinstance(left, str) and left.startswith("$.") else left
-    rv = jget(locals_dict, right) if isinstance(right, str) and right.startswith("$.") else right
+    lv = jget(obj, left) if isinstance(left, str) and left.startswith("$.") else left
+    rv = jget(obj, right) if isinstance(right, str) and right.startswith("$.") else right
     return OP[op_name](lv, rv)
+
+def eval_where(locals_dict, where):
+    """
+    Valuta la clausola where su locals_dict (che contiene i valori di 'select').
+    Estensioni supportate:
+      - any_item: { in: "$.<lista>", satisfy: <clausola> }  -> True se almeno un elemento soddisfa la clausola
+    """
+    if "any_item" in where:
+        spec = where["any_item"]
+        seq = jget(locals_dict, spec.get("in"))
+        if not isinstance(seq, list):
+            return False
+        pred = spec.get("satisfy", {})
+        for el in seq:
+            if eval_clause_on(el, pred):
+                return True
+        return False
+
+    # Altrimenti, valuta come insieme di clausole standard sul locals_dict
+    return eval_clause_on(locals_dict, where)
 
 def type_matches(item_type: str, rule_type: str) -> bool:
     it = (item_type or "").lower()
@@ -60,9 +84,11 @@ def main(inventory_path, rules_path, out_path):
         where = rule.get("where", {})
         for it in items:
             if type_matches(it.get("type"), rtype):
+                # costruisci il contesto locale dai select
                 local = {k: jget(it, expr) for k, expr in sel.items()}
-                local["item"] = it
-                if eval_clause(local, where):
+                local["item"] = it  # disponibile se serve
+                if eval_where(local, where):
+                    # Chiavi in ordine: resource_id, Rule Violated, severity
                     finding = {}
                     finding["resource_id"] = it.get("id")
                     finding["Rule Violated"] = rule["id"]
