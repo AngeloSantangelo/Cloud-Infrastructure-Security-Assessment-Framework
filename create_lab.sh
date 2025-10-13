@@ -43,7 +43,7 @@ az storage account create \
   --allow-blob-public-access true \
   -o table
 
-# (facoltativo ma utile per lab) assicura che le Shared Key siano abilitate
+# assicura che le Shared Key siano abilitate
 az storage account update -g "$RG" -n "$ST" --min-tls-version TLS1_0 --allow-shared-key-access true -o table
 
 # prova a prendere la chiave
@@ -178,4 +178,4 @@ echo "Credenziali di laboratorio (NON SICURE):"
 echo "  VM -> $ADMIN_USER / $ADMIN_PASS"
 echo "  SQL -> $SQL_USER / $SQL_PASS"
 echo
-echo "Quando hai finito:  az group delete -n $RG --yes --no-wait"
+echo "FINISH"

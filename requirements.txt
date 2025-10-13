@@ -7,4 +7,5 @@ azure-mgmt-web>=3.0.0
 azure-mgmt-sql>=2.0.0
 azure-mgmt-containerregistry>=8.0.0
 azure-mgmt-cosmosdb>=8.0.0
-props
+jsonpath-ng>=1.5.3
+PyYAML>=6.0.1
