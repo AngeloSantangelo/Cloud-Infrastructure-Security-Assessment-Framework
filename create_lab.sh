@@ -4,31 +4,30 @@ set -euo pipefail
 # === Parametri personalizzabili =================================================
 LOCATION="westeurope"
 SQL_LOCATION="northeurope"
-# Utenti/password di laboratorio (deboli di proposito: cambiali se vuoi)
 ADMIN_USER="labadmin"
 ADMIN_PASS="LabPassword123!"
 SQL_USER="sqladminuser"
 SQL_PASS="SqlPassword123!"
 
 # === Suffix per nomi globalmente unici ==========================================
-SUFFIX=$(date +%s)   # semplice ma efficace per nomi univoci
+SUFFIX=$(date +%s)
 
 # === Nomi risorse ================================================================
 RG="rg-miscfg-lab"
-ST="st${SUFFIX}miscfg"          # 3-24 chars, solo lower-case e numeri
-KV="kv${SUFFIX}miscfg"          # 3-24 alfanumerico
+ST="st${SUFFIX}miscfg"          
+KV="kv${SUFFIX}miscfg"          
 NSG="nsg-miscfg"
 VNET="vnet-miscfg"
 SUBNET="snet-miscfg"
 PIP="pip-miscfg"
 NIC="nic-miscfg"
 VM="vm-miscfg"
-SQL="sql${SUFFIX}miscfg"        # univoco a livello globale
+SQL="sql${SUFFIX}miscfg"        
 DB="miscfgdb"
 ASP="asp-miscfg"
-WEB="web${SUFFIX}miscfg"        # univoco a livello globale
+WEB="web${SUFFIX}miscfg"        
 
-echo "==> Login e subscription correnti (assicurati di essere autenticato con 'az login')"
+echo "==> Login e subscription correnti"
 az account show -o table || true
 
 echo "==> 1) Resource Group"
@@ -46,7 +45,6 @@ az storage account create \
 # assicura che le Shared Key siano abilitate
 az storage account update -g "$RG" -n "$ST" --min-tls-version TLS1_0 --allow-shared-key-access true -o table
 
-# prova a prendere la chiave
 echo "==> Recupero account key"
 SAKEY="$(az storage account keys list -g "$RG" -n "$ST" --query "[0].value" -o tsv || true)"
 
@@ -132,7 +130,7 @@ if ! az sql server create -l "$SQL_LOCATION" -g "$RG" -n "$SQL" \
     --admin-user "$SQL_USER" --admin-password "$SQL_PASS" -o table
 fi
 
-# Rete pubblica: molte CLI recenti abilitan già la public network; in caso contrario, prova l'update
+# Rete pubblica: molte CLI recenti abilitano già la public network; in caso contrario, prova l'update
 az sql server update -g "$RG" -n "$SQL" --enable-public-network true -o table || true
 
 # Regola firewall TUTTI gli IP (MISCONFIG)
@@ -145,13 +143,13 @@ az sql db create -g "$RG" -s "$SQL" -n "$DB" --service-objective S0 -o table
 
 echo "==> 8) App Service Plan + Web App con HTTPS-only DISABILITATO e FTP consentito (MISCONFIG)"
 
-# Regione dedicata per App Service (diversa da LOCATION se serve capacità)
+# Regione dedicata per App Service
 APP_LOCATION="northeurope"
 
-# App Service Plan (Linux). Se F1 fosse limitato, cambia in B1.
+# App Service Plan (Linux)
 az appservice plan create -g "$RG" -n "$ASP" -l "$APP_LOCATION" --sku F1 --is-linux -o table
 
-# Web App (eredità la regione dal plan)
+# Web App
 az webapp create -g "$RG" -p "$ASP" -n "$WEB" --runtime "PYTHON:3.11" -o table
 
 # Misconfig intenzionali

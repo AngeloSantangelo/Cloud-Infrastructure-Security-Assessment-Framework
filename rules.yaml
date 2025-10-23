@@ -1,5 +1,3 @@
-
-# rules.yaml — Starter pack con Rationale e References (descrizione + link)
 rules:
   - id: appservice-https-only
     description: "App Service deve forzare HTTPS"

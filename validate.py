@@ -1,9 +1,6 @@
-# validate.py — Valida regole YAML statiche su inventory.json (con any_item)
 # Requisiti:
 #   pip install jsonpath-ng pyyaml
-#
-# Uso:
-#   python validate.py ./inventory.json ./rules.yaml ./report.json
+
 import json, sys, re, yaml
 from jsonpath_ng.ext import parse as jp  # parser esteso (serve per JSONPath base)
 
@@ -84,7 +81,7 @@ def main(inventory_path, rules_path, out_path):
         where = rule.get("where", {})
         for it in items:
             if type_matches(it.get("type"), rtype):
-                # costruisci il contesto locale dai select
+                # costruisce il contesto locale dai select
                 local = {k: jget(it, expr) for k, expr in sel.items()}
                 local["item"] = it  # disponibile se serve
                 if eval_where(local, where):

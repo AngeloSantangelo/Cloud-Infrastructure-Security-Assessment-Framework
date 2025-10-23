@@ -1,27 +1,3 @@
-#!/usr/bin/env python3
-"""
-Azure Inventory Collector — RAW ONLY (universale) + sub-resources essenziali
-
-Cosa fa:
-- Enumera tutte le risorse top-level nel Resource Group
-- Aggiunge sub-resources chiave NON sempre elencate di default:
-    • Microsoft.Sql/servers/firewallRules
-    • Microsoft.Web/sites/config  (id: .../sites/<name>/config/web)
-- Per OGNI risorsa (top-level e sub), esegue una GET ARM generica e salva le RAW:
-    {
-      "raw": {
-        "api_version": "...",
-        "object": { ... risposta ARM completa ... },
-        "properties": { ... scorciatoia a object.properties ... }
-      }
-    }
-
-Uso:
-  python inventory_collector.py \
-    --subscription-id <SUB_ID> \
-    --resource-group <RG_NAME> \
-    --output ./inventory.json \
-"""
 from __future__ import annotations
 
 import argparse
@@ -42,9 +18,6 @@ from azure.mgmt.sql import SqlManagementClient
 from azure.mgmt.web import WebSiteManagementClient
 from azure.core.exceptions import HttpResponseError
 
-# -----------------------------------------------------------------------------
-# Logging
-# -----------------------------------------------------------------------------
 LOG = logging.getLogger("inventory")
 handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
@@ -57,7 +30,7 @@ for noisy in ["azure", "msrest", "uamqp"]:
 os.environ.setdefault("AZURE_CORE_TELEMETRY_ENABLED", "false")
 
 # -----------------------------------------------------------------------------
-# Retry helper
+# Backoff Esponenziale
 # -----------------------------------------------------------------------------
 def retry(fn, *, tries: int = 3, delay: float = 1.0, backoff: float = 2.0):
     def wrapper(*args, **kwargs):
