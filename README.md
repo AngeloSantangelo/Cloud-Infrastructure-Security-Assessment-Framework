@@ -1,7 +1,7 @@
 # Cloud-Infrastructure-Security-Assessment-Framework
 Il presente lavoro presenta un framework per la valutazione di sicurezza delle configurazioni cloud focalizzato sul provider **Microsoft Azure**. Il framework implementa due componenti chiave:
-• **Cloud Inventory Collector**: enumerazione e raccolta delle configurazioni delle risorse in un Resource Group;
-• **Configuration Analyzer**: validazione di regole di sicurezza sulle configurazioni raccolte.
+- **Cloud Inventory Collector**: enumerazione e raccolta delle configurazioni delle risorse in un Resource Group;
+- **Configuration Analyzer**: validazione di regole di sicurezza sulle configurazioni raccolte.
 L’**obiettivo** è automatizzare la discovery e il controllo delle principali misconfigurations che espongono l’ambiente a rischi (es. porte aperte, firewall permissivi, password deboli, ecc.).
 
 ## Architettura
