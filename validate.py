@@ -83,7 +83,7 @@ def main(inventory_path, rules_path, out_path):
             if type_matches(it.get("type"), rtype):
                 # costruisce il contesto locale dai select
                 local = {k: jget(it, expr) for k, expr in sel.items()}
-                local["item"] = it  # disponibile se serve
+                local["item"] = it 
                 if eval_where(local, where):
                     # Chiavi in ordine: resource_id, Rule Violated, severity
                     finding = {}
