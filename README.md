@@ -18,11 +18,11 @@ pip install -r requirements.txt
 
 ```
 ## Descrizione dei File
-• **create_lab.sh**: rappresenta il file per automatizzare il provisioning dell'infrastruttura (creazione del Resource Group su Azure).
-• **unistall.sh**: rappresenta il file per automatizzare il de-provisioning dell'infrastruttura.
-• **inventory_collector.py**: rappresenta il file contente il codice dell'Inventory Collector. Enumera tutte le risorse, con le relative proprietà e configurazioni, sottoforma di inventario JSON.
-• **rules.yaml**: rappresenta il file contenente le regole YAML.
-• **validate.py**: rappresenta il file contenente il codice del Configuration Analyzer. Valida le configurazioni delle risorse Azure confrontandole con le regole definite in YAML e genera un report JSON contenente esclusivamente le risorse non conformi.
+- **create_lab.sh**: rappresenta il file per automatizzare il provisioning dell'infrastruttura (creazione del Resource Group su Azure)
+- **unistall.sh**: rappresenta il file per automatizzare il de-provisioning dell'infrastruttura.
+- **inventory_collector.py**: rappresenta il file contente il codice dell'Inventory Collector. Enumera tutte le risorse, con le relative proprietà e configurazioni, sottoforma di inventario JSON.
+- **rules.yaml**: rappresenta il file contenente le regole YAML.
+- **validate.py**: rappresenta il file contenente il codice del Configuration Analyzer. Valida le configurazioni delle risorse Azure confrontandole con le regole definite in YAML e genera un report JSON contenente esclusivamente le risorse non conformi.
 
 ## Configurazione dell'infrastruttura di Azure
 Per automatizzare la procedura di provisioning delle risorse, è stato sviluppato uno script Bash (create_lab.sh). Puoi personalizzare sia le risorse sia le variabili d'ambiente, specificando i valori appropriati per la propria architettura. Una volta completata la configurazione, esegui il seguente comando per avviare il processo di installazione:
