@@ -1,14 +1,29 @@
 # Cloud-Infrastructure-Security-Assessment-Framework
+Il presente lavoro presenta un framework per la valutazione di sicurezza delle configurazioni cloud focalizzato sul provider **Microsoft Azure**. Il framework implementa due componenti chiave:
+• **Cloud Inventory Collector**: enumerazione e raccolta delle configurazioni delle risorse in un Resource Group;
+• **Configuration Analyzer**: validazione di regole di sicurezza sulle configurazioni raccolte.
+L’**obiettivo** è automatizzare la discovery e il controllo delle principali misconfigurations che espongono l’ambiente a rischi (es. porte aperte, firewall permissivi, password deboli, ecc.).
+
+## Architettura
+<img width="1311" height="130" alt="image" src="https://github.com/user-attachments/assets/fe9c1062-6892-43e2-b0dc-73a69d833d49" />
 
 ## Requirements
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) per eseguire il provisioning dell'infrastruttura.
 - Account/Sottoscrizione Azure (i.e. Azure for Students).
-- Requisiti per l'Inventory Collector:
+- [Python (v^3)](https://www.python.org/downloads/)
+- Altri Requisiti:
 ```bash
 
 pip install -r requirements.txt
 
 ```
+## Descrizione dei File
+• **create_lab.sh**: rappresenta il file per automatizzare il provisioning dell'infrastruttura (creazione del Resource Group su Azure).
+• **unistall.sh**: rappresenta il file per automatizzare il de-provisioning dell'infrastruttura.
+• **inventory_collector.py**: rappresenta il file contente il codice dell'Inventory Collector. Enumera tutte le risorse, con le relative proprietà e configurazioni, sottoforma di inventario JSON.
+• **rules.yaml**: rappresenta il file contenente le regole YAML.
+• **validate.py**: rappresenta il file contenente il codice del Configuration Analyzer. Valida le configurazioni delle risorse Azure confrontandole con le regole definite in YAML e genera un report JSON contenente esclusivamente le risorse non conformi.
+
 ## Configurazione dell'infrastruttura di Azure
 Per automatizzare la procedura di provisioning delle risorse, è stato sviluppato uno script Bash (create_lab.sh). Puoi personalizzare sia le risorse sia le variabili d'ambiente, specificando i valori appropriati per la propria architettura. Una volta completata la configurazione, esegui il seguente comando per avviare il processo di installazione:
 ```bash
