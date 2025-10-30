@@ -29,7 +29,7 @@ rules:
   - id: storage-minimum-tls-1_2
     description: "Storage Account deve avere Minimum TLS >= 1.2"
     resource_type: Microsoft.Storage/storageAccounts
-    severity: High
+    severity: Medium
     rationale: "TLS < 1.2 è deprecato; Microsoft richiede/consiglia TLS 1.2 come minimo."
     references:
       - "Azure Storage - Configurare la minimum TLS version: https://learn.microsoft.com/azure/storage/common/transport-layer-security-configure-minimum-version"
@@ -105,7 +105,7 @@ rules:
   - id: sql-fw-allow-all
     description: "SQL firewall non deve avere 0.0.0.0-255.255.255.255"
     resource_type: Microsoft.Sql/servers/firewallRules
-    severity: High
+    severity: Critical
     rationale: "Regola 'allow all' espone il DB a Internet; rischio critico di compromissione/esfiltrazione."
     references:
       - "Azure SQL - Configurare le firewall rules: https://learn.microsoft.com/azure/azure-sql/database/firewall-configure?view=azuresql"
