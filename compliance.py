@@ -1,4 +1,3 @@
-# compliance.py
 # Uso: python compliance.py report.json compliance_mapping_cis.yaml compliance.json
 import json
 import sys
