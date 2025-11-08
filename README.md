@@ -24,7 +24,14 @@ pip install -r requirements.txt
 - **rules.yaml**: rappresenta il file contenente le regole YAML.
 - **validate.py**: rappresenta il file contenente il codice del Configuration Analyzer. Valida le configurazioni delle risorse Azure confrontandole con le regole definite in YAML e genera un report JSON contenente esclusivamente le risorse non conformi.
 
-## Configurazione dell'infrastruttura di Azure
+## Clonazione del Progetto e Configurazione dell'infrastruttura di Azure
+Per iniziare, clona il repository sul tuo Computer locale utilizzando il comando `git clone` nel seguente modo:
+
+```bash
+
+git clone https://github.com/AngeloSantangelo/Cloud-Infrastructure-Security-Assessment-Framework.git
+
+```
 Per automatizzare la procedura di provisioning delle risorse, è stato sviluppato uno script Bash (create_lab.sh). Puoi personalizzare sia le risorse sia le variabili d'ambiente, specificando i valori appropriati per la propria architettura. Una volta completata la configurazione, esegui il seguente comando per avviare il processo di installazione:
 ```bash
 
