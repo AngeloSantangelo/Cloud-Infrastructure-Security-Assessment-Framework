@@ -2,10 +2,16 @@
 Il presente lavoro presenta un framework per la valutazione di sicurezza delle configurazioni cloud focalizzato sul provider **Microsoft Azure**. Il framework implementa due componenti chiave:
 - **Cloud Inventory Collector**: enumerazione e raccolta delle configurazioni delle risorse in un Resource Group;
 - **Configuration Analyzer**: validazione di regole di sicurezza sulle configurazioni raccolte.
+- **Compliance Benchmark Evaluator**: aggregazione dei findings rispetto a un benchmark di riferimento (CIS Microsoft Azure Benchmark) e generazione di un report di compliance.
+- **Risck Scorer**: calcolatore punteggio di rischio del Resource Group.
+- **Reporting Engine**: aggregazione di risultati e creazione di un report pronto per l'utente.
 L’**obiettivo** è automatizzare la discovery e il controllo delle principali misconfigurations che espongono l’ambiente a rischi (es. porte aperte, firewall permissivi, password deboli, ecc.).
 
 ## Architettura
 <img width="464" height="675" alt="image" src="https://github.com/user-attachments/assets/82fdb2c7-cd81-4e2c-acfe-a0a8efb04adf" />
+
+## Flusso del Framework
+<img width="1472" height="948" alt="image" src="https://github.com/user-attachments/assets/5aec6cdf-44ed-4fd2-89a8-02b88c2ff780" />
 
 
 ## Requirements
