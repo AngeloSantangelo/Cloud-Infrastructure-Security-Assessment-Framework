@@ -5,7 +5,8 @@ Il presente lavoro presenta un framework per la valutazione di sicurezza delle c
 L’**obiettivo** è automatizzare la discovery e il controllo delle principali misconfigurations che espongono l’ambiente a rischi (es. porte aperte, firewall permissivi, password deboli, ecc.).
 
 ## Architettura
-<img width="1311" height="130" alt="image" src="https://github.com/user-attachments/assets/fe9c1062-6892-43e2-b0dc-73a69d833d49" />
+<img width="464" height="675" alt="image" src="https://github.com/user-attachments/assets/82fdb2c7-cd81-4e2c-acfe-a0a8efb04adf" />
+
 
 ## Requirements
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) per eseguire il provisioning dell'infrastruttura.
@@ -20,9 +21,12 @@ pip install -r requirements.txt
 ## Descrizione dei File
 - **create_lab.sh**: rappresenta il file per automatizzare il provisioning dell'infrastruttura (creazione del Resource Group su Azure)
 - **unistall.sh**: rappresenta il file per automatizzare il de-provisioning dell'infrastruttura.
-- **inventory_collector.py**: rappresenta il file contente il codice dell'Inventory Collector. Enumera tutte le risorse, con le relative proprietà e configurazioni, sottoforma di inventario JSON.
+- **inventory_collector.py**: rappresenta l'Inventory Collector. Enumera tutte le risorse, con le relative proprietà e configurazioni, sottoforma di inventario JSON.
 - **rules.yaml**: rappresenta il file contenente le regole YAML.
-- **validate.py**: rappresenta il file contenente il codice del Configuration Analyzer. Valida le configurazioni delle risorse Azure confrontandole con le regole definite in YAML e genera un report JSON contenente esclusivamente le risorse non conformi.
+- **validate.py**: rappresenta il Configuration Analyzer. Valida le configurazioni delle risorse Azure confrontandole con le regole definite in YAML e genera un report JSON contenente esclusivamente le risorse non conformi.
+- **compliance_mapping_cis.yaml**: rappresenta il file contenente le regole esistenti nel benchmark "CIS Microsoft Azure Benchmark" corrispondenti alle regole YAML nel file "rules.yaml".
+- **compliance.py**: rappresenta il Compliance Benchmark Evaluator, il modulo che valuta la mappatura delle regole YAML con le regole del benchmark CIS.
+- **risk_scorer.py**: rappresenta il Risk Scorer, il modulo che, sulla base delle configurazioni raccolte circa le risorse Azure, calcola un punteggio di rischio riguardo l'ambiente.
 
 ## Clonazione del Progetto e Configurazione dell'infrastruttura di Azure
 Per iniziare, clona il repository sul tuo Computer locale utilizzando il comando `git clone` nel seguente modo:
