@@ -1,5 +1,5 @@
 # Cloud-Infrastructure-Security-Assessment-Framework
-Il presente lavoro presenta un framework per la valutazione di sicurezza delle configurazioni cloud focalizzato sul provider **Microsoft Azure**. Il framework implementa due componenti chiave:
+Il presente lavoro presenta un framework per la valutazione di sicurezza delle configurazioni cloud focalizzato sul provider **Microsoft Azure**. Il framework implementa cinque componenti chiave:
 - **Cloud Inventory Collector**: enumerazione e raccolta delle configurazioni delle risorse in un Resource Group;
 - **Configuration Analyzer**: validazione di regole di sicurezza sulle configurazioni raccolte.
 - **Compliance Benchmark Evaluator**: aggregazione dei findings rispetto a un benchmark di riferimento (CIS Microsoft Azure Benchmark) e generazione di un report di compliance.
