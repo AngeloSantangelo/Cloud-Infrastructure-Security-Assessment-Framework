@@ -27,11 +27,24 @@ DB="miscfgdb"
 ASP="asp-miscfg"
 WEB="web${SUFFIX}miscfg"        
 
+# Ambiente di PRODUZIONE con dati ad ALTA sensibilità
+TAGS_PROD_HIGH="env=prod sensitivity=high project=azure-misconfig-lab owner=student"
+
+# Ambiente di PRODUZIONE con dati CRITICI (es. Key Vault, SQL)
+TAGS_PROD_CRIT="env=prod sensitivity=critical project=azure-misconfig-lab owner=student"
+
+# Ambiente di STAGE / PRE-PROD, sensibilità MEDIA
+TAGS_STAGE="env=stage project=azure-misconfig-lab owner=student"
+
+# Ambiente di DEV / sensibilità BASSA
+TAGS_DEV="env=dev project=azure-misconfig-lab owner=student"
+
+
 echo "==> Login e subscription correnti"
 az account show -o table || true
 
 echo "==> 1) Resource Group"
-az group create -n "$RG" -l "$LOCATION" -o table
+az group create -n "$RG" -l "$LOCATION" --tags $TAGS_PROD_HIGH -o table
 
 
 echo "==> 2) Storage Account con accesso pubblico ai blob e TLS1.0 (MISCONFIG)"
@@ -40,6 +53,7 @@ az storage account create \
   --sku Standard_LRS \
   --https-only false \
   --allow-blob-public-access true \
+  --tags $TAGS_PROD_HIGH \
   -o table
 
 # assicura che le Shared Key siano abilitate
@@ -75,12 +89,12 @@ fi
 
 
 echo "==> 3) Key Vault con Public Network Access abilitato e firewall permissivo (MISCONFIG)"
-az keyvault create -n "$KV" -g "$RG" -l "$LOCATION" --public-network-access Enabled -o table
+az keyvault create -n "$KV" -g "$RG" -l "$LOCATION" --public-network-access Enabled --tags $TAGS_PROD_CRIT -o table
 # Imposta default action Allow e bypass (praticamente aperto da Internet, autenticazione a parte)
 az keyvault update -n "$KV" --default-action Allow --bypass AzureServices -o table
 
 echo "==> 4) Network Security Group con porte aperte da Internet (MISCONFIG)"
-az network nsg create -g "$RG" -n "$NSG" -l "$LOCATION" -o table
+az network nsg create -g "$RG" -n "$NSG" -l "$LOCATION" --tags $TAGS_PROD_HIGH -o table
 # SSH 22
 az network nsg rule create -g "$RG" --nsg-name "$NSG" -n "allow-ssh" \
   --priority 100 --access Allow --protocol Tcp --direction Inbound \
@@ -103,11 +117,11 @@ az network nsg rule create -g "$RG" --nsg-name "$NSG" -n "allow-sql" \
   --destination-port-ranges 1433 -o table
 
 echo "==> 5) Rete + IP pubblico (Statico) + NIC associata al NSG (MISCONFIG)"
-az network public-ip create -g "$RG" -n "$PIP" -l "$LOCATION" --sku Standard --allocation-method Static -o table
+az network public-ip create -g "$RG" -n "$PIP" -l "$LOCATION" --sku Standard --allocation-method Static --tags $TAGS_PROD_HIGH -o table
 az network vnet create -g "$RG" -n "$VNET" -l "$LOCATION" --address-prefix 10.10.0.0/16 \
-  --subnet-name "$SUBNET" --subnet-prefix 10.10.1.0/24 -o table
+  --subnet-name "$SUBNET" --subnet-prefix 10.10.1.0/24 --tags $TAGS_PROD_HIGH -o table
 az network nic create -g "$RG" -n "$NIC" --vnet-name "$VNET" --subnet "$SUBNET" \
-  --network-security-group "$NSG" --public-ip-address "$PIP" -o table
+  --network-security-group "$NSG" --public-ip-address "$PIP" --tags $TAGS_PROD_HIGH -o table
 
 echo "==> 6) VM Linux con password auth (MISCONFIG) e IP pubblico"
 az vm create -g rg-miscfg-lab -n vm-miscfg \
@@ -118,11 +132,12 @@ az vm create -g rg-miscfg-lab -n vm-miscfg \
   --nics nic-miscfg \
   --size Standard_B1s \
   --public-ip-sku Standard \
+  --tags $TAGS_DEV \
   -o table
 
 echo "==> 7) Azure SQL Server + DB con firewall 0.0.0.0/0 e public network access (MISCONFIG)"
 if ! az sql server create -l "$SQL_LOCATION" -g "$RG" -n "$SQL" \
-  --admin-user "$SQL_USER" --admin-password "$SQL_PASS" \
+  --admin-user "$SQL_USER" --admin-password "$SQL_PASS" --tags $TAGS_PROD_CRIT \
   -o table; then
   echo "Creazione SQL server fallita in $SQL_LOCATION; provo a UK South..."
   SQL_LOCATION="uksouth"
@@ -137,8 +152,8 @@ az sql server update -g "$RG" -n "$SQL" --enable-public-network true -o table ||
 az sql server firewall-rule create -g "$RG" -s "$SQL" -n "AllowAll" \
   --start-ip-address 0.0.0.0 --end-ip-address 255.255.255.255 -o table
 
-az sql db create -g "$RG" -s "$SQL" -n "$DB" --service-objective Basic -o table || \
-az sql db create -g "$RG" -s "$SQL" -n "$DB" --service-objective S0 -o table
+az sql db create -g "$RG" -s "$SQL" -n "$DB" --service-objective Basic --tags $TAGS_PROD_HIGH -o table || \
+az sql db create -g "$RG" -s "$SQL" -n "$DB" --service-objective S0 --tags $TAGS_PROD_HIGH -o table
 
 
 echo "==> 8) App Service Plan + Web App con HTTPS-only DISABILITATO e FTP consentito (MISCONFIG)"
@@ -147,10 +162,10 @@ echo "==> 8) App Service Plan + Web App con HTTPS-only DISABILITATO e FTP consen
 APP_LOCATION="northeurope"
 
 # App Service Plan (Linux)
-az appservice plan create -g "$RG" -n "$ASP" -l "$APP_LOCATION" --sku F1 --is-linux -o table
+az appservice plan create -g "$RG" -n "$ASP" -l "$APP_LOCATION" --sku F1 --is-linux --tags $TAGS_STAGE -o table
 
 # Web App
-az webapp create -g "$RG" -p "$ASP" -n "$WEB" --runtime "PYTHON:3.11" -o table
+az webapp create -g "$RG" -p "$ASP" -n "$WEB" --runtime "PYTHON:3.11" --tags $TAGS_STAGE -o table
 
 # Misconfig intenzionali
 az webapp update -g "$RG" -n "$WEB" --https-only false -o table
