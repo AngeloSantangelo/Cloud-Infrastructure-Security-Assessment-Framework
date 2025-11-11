@@ -57,3 +57,18 @@ bash uninstall.sh
 
 ```
 L'esecuzione di questo comando garantirà la corretta eliminazione di tutte le risorse create durante il provisioning, semplificando così il processo di deprovisioning dell'infrastruttura.
+
+## Esecuzione del Framework
+Per automatizzare l'esecuzione di ogni modulo, e quindi dell'intero framework, bisogna fare riferimento al file "run_full_workflow.sh", il quale è in grado di eseguire tutti i moduli insieme e portare l'utente a visulizzare subito i risultati. 
+Prima di tutto, bisogna inferire i permessi di esecuzione al file con il seguente comando:
+```bash
+
+chmod +x run_full_workflow.sh
+
+```
+Successivamente, può essere lanciato con il seguente comando:
+```bash
+
+./run_full_workflow.sh <SUBSCRIPTION_ID>
+
+```
