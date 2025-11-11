@@ -136,24 +136,39 @@ az vm create -g rg-miscfg-lab -n vm-miscfg \
   -o table
 
 echo "==> 7) Azure SQL Server + DB con firewall 0.0.0.0/0 e public network access (MISCONFIG)"
+# 7.1 Creazione SQL Server (SENZA --tags, perché il comando non li supporta)
 if ! az sql server create -l "$SQL_LOCATION" -g "$RG" -n "$SQL" \
-  --admin-user "$SQL_USER" --admin-password "$SQL_PASS" --tags $TAGS_PROD_CRIT \
+  --admin-user "$SQL_USER" --admin-password "$SQL_PASS" \
   -o table; then
   echo "Creazione SQL server fallita in $SQL_LOCATION; provo a UK South..."
   SQL_LOCATION="uksouth"
   az sql server create -l "$SQL_LOCATION" -g "$RG" -n "$SQL" \
-    --admin-user "$SQL_USER" --admin-password "$SQL_PASS" -o table
+    --admin-user "$SQL_USER" --admin-password "$SQL_PASS" \
+    -o table
 fi
 
-# Rete pubblica: molte CLI recenti abilitano già la public network; in caso contrario, prova l'update
+# 7.2 Applico i TAG al SQL Server DOPO la creazione
+az resource tag \
+  --resource-group "$RG" \
+  --resource-type "Microsoft.Sql/servers" \
+  --name "$SQL" \
+  --tags $TAGS_PROD_CRIT \
+  -o table
+
+# 7.3 Abilito public network access (MISCONFIG)
 az sql server update -g "$RG" -n "$SQL" --enable-public-network true -o table || true
 
-# Regola firewall TUTTI gli IP (MISCONFIG)
+# 7.4 Regola firewall TUTTI gli IP (MISCONFIG)
 az sql server firewall-rule create -g "$RG" -s "$SQL" -n "AllowAll" \
   --start-ip-address 0.0.0.0 --end-ip-address 255.255.255.255 -o table
 
-az sql db create -g "$RG" -s "$SQL" -n "$DB" --service-objective Basic --tags $TAGS_PROD_HIGH -o table || \
-az sql db create -g "$RG" -s "$SQL" -n "$DB" --service-objective S0 --tags $TAGS_PROD_HIGH -o table
+# 7.5 Database con tag (questo comando invece supporta --tags, e l'hai già usato correttamente)
+az sql db create -g "$RG" -s "$SQL" -n "$DB" \
+  --service-objective Basic \
+  --tags $TAGS_PROD_CRIT -o table || \
+az sql db create -g "$RG" -s "$SQL" -n "$DB" \
+  --service-objective S0 \
+  --tags $TAGS_PROD_CRIT -o table
 
 
 echo "==> 8) App Service Plan + Web App con HTTPS-only DISABILITATO e FTP consentito (MISCONFIG)"

@@ -64,6 +64,35 @@ def infer_sensitivity(tags: dict) -> float:
     # default
     return 1.0
 
+
+def get_effective_tags(resource_id: str, item_by_id: dict) -> dict:
+    """
+    Ritorna i tag 'effettivi' della risorsa.
+    Se la risorsa non ha tag, prova a risalire l'albero dell'ID
+    e a usare i tag del primo genitore che ne ha.
+    """
+    # 1) Provo prima i tag diretti della risorsa
+    item = item_by_id.get(resource_id)
+    if item:
+        tags = item.get("tags") or {}
+        if tags:
+            return tags
+
+    # 2) Risalgo l'ID, togliendo l'ultimo segmento ad ogni iterazione
+    parent_id = resource_id
+    for _ in range(5):  # massimo 5 livelli
+        if "/" not in parent_id:
+            break
+        parent_id = parent_id.rsplit("/", 1)[0]
+        parent = item_by_id.get(parent_id)
+        if parent:
+            ptags = parent.get("tags") or {}
+            if ptags:
+                return ptags
+
+    # 3) Nessun tag trovato
+    return {}
+
 # ---------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------
@@ -87,7 +116,7 @@ def main(inventory_path: str, findings_path: str, compliance_path: str, out_path
             continue
         findings_by_res.setdefault(rid, []).append(f)
 
-    # 3) (Opzionale) carico risultato di compliance
+    # 3) Carico risultato di compliance
     compliance_doc = None
     failed_controls = None
     total_controls = None
@@ -107,24 +136,26 @@ def main(inventory_path: str, findings_path: str, compliance_path: str, out_path
 
     for rid, item in item_by_id.items():
         res_findings = findings_by_res.get(rid, [])
-        tags = item.get("tags") or {}
+        tags = get_effective_tags(rid, item_by_id)
         sensitivity = infer_sensitivity(tags)
 
         # severità massima fra i findings della risorsa
         max_w = 0.0
+        sum_w = 0.0
         findings_out = []
         for f in res_findings:
             sev_raw = (f.get("severity") or "").lower()
-            w = SEVERITY_WEIGHTS.get(sev_raw, 0.5 if sev_raw else 0.0)
+            w = SEVERITY_WEIGHTS.get(sev_raw, 0.0)
             if w > max_w:
                 max_w = w
+            sum_w += w
 
             findings_out.append({
                 "rule_id": f.get("Rule Violated") or f.get("rule_id"),
                 "severity": sev_raw or None,
             })
 
-        resource_score = max_w * sensitivity
+        resource_score = sum_w * sensitivity
         sum_resource_scores += resource_score
 
         resources_out.append({
@@ -170,12 +201,10 @@ def main(inventory_path: str, findings_path: str, compliance_path: str, out_path
 
     # 7) Risk grade (stringa da usare nel report)
     if score_percent < 20:
-        grade = "Very Low"
-    elif score_percent < 40:
         grade = "Low"
-    elif score_percent < 60:
+    elif score_percent < 40:
         grade = "Medium"
-    elif score_percent < 80:
+    elif score_percent < 70:
         grade = "High"
     else:
         grade = "Critical"
