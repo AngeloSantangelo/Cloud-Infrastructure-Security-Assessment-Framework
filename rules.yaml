@@ -121,7 +121,7 @@ rules:
   - id: keyvault-disable-public-network
     description: "Key Vault deve disabilitare l'accesso da rete pubblica (usare Private Endpoint)"
     resource_type: Microsoft.KeyVault/vaults
-    severity: High
+    severity: Critical
     rationale: "Accesso pubblico al Key Vault aumenta superficie d'attacco e rischio di data leakage."
     references:
       - "Azure Policy built-in - PNA should be disabled: https://learn.microsoft.com/azure/key-vault/policy-reference"
