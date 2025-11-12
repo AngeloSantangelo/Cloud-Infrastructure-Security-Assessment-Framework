@@ -40,16 +40,101 @@ def main(findings_path, mapping_path, out_path):
 
         controls_out.append({
             "control_id": ctrl_id,
-            "framework": ctrl_framework,
-            "description": desc,
+            "framework": ctrl_framework,          # stringa come nel YAML
+            "description": desc,                  # descrizione dal YAML
             "status": status,
             "violated_rules": rule_ids,
             "affected_resources": sorted(affected_resources),
         })
 
+    # === Deduplica dei "controlli logici" senza toccare il YAML =================
+    # Eccezioni: rule_id che NON vanno deduplicati anche se hanno lo stesso violated_rules
+    # (es. NSG per porte diverse: rischi distinti)
+    DEDUP_EXCEPT_RULES = {"nsg-no-internet-admin-ports"}
+
+    def dedup_key(entry: dict):
+        """
+        Chiave canonica per deduplica: insieme ordinato delle violated_rules.
+        Se tra le violated_rules c'è una regola in eccezione, non deduplicare (pass-through).
+        """
+        vr = tuple(sorted(entry.get("violated_rules") or []))
+        if any(r in DEDUP_EXCEPT_RULES for r in vr):
+            return None
+        return vr
+
+    # raggruppo per chiave canonica
+    groups = {}       # key -> list[control entries] (candidati a fusione)
+    passthrough = []  # controlli che saltano la deduplica (eccezioni o gruppi singoli)
+
+    for c in controls_out:
+        key = dedup_key(c)
+        if key is None:
+            # eccezione: non deduplicare
+            passthrough.append(c)
+        else:
+            groups.setdefault(key, []).append(c)
+
+    dedup_controls = []
+    for vr_key, items in groups.items():
+        if len(items) == 1:
+            # non è un duplicato: mantieni il controllo originale
+            dedup_controls.append(items[0])
+            continue
+
+        # C'è davvero un duplicato: fondi gli elementi del gruppo
+        # Rappresentante: PRIMO controllo così come definito nel YAML
+        rep = items[0]
+        rep_description = rep.get("description", "")
+        rep_rule_ids = list(vr_key)
+
+        # Stato aggregato: FAIL se almeno uno è FAIL; risorse affette unite
+        status = "PASS"
+        affected = set()
+
+        # Per tracciare corrispondenza tra ID e framework
+        control_ids = []
+        frameworks = []
+        sources = []  # [{control_id, framework}]
+
+        for it in items:
+            cid = it.get("control_id", "")
+            fw = it.get("framework", global_framework)
+            control_ids.append(cid)
+            frameworks.append(fw)
+            sources.append({"control_id": cid, "framework": fw})
+
+            if it.get("status") == "FAIL":
+                status = "FAIL"
+                affected.update(it.get("affected_resources") or [])
+
+        # Unisci ID con " + " (niente prefisso DEDUP)
+        merged_control_id = " + ".join([c for c in control_ids if c])
+
+        # Framework come lista (unica) di tutti i PDF di provenienza
+        # Mantieni l'ordine di apparizione, rimuovendo i duplicati
+        seen_fw = set()
+        merged_frameworks = []
+        for fw in frameworks:
+            if fw and fw not in seen_fw:
+                merged_frameworks.append(fw)
+                seen_fw.add(fw)
+
+        dedup_controls.append({
+            "control_id": merged_control_id,          # es: "CIS-2.1.5 + CIS-7.2.3"
+            "framework": merged_frameworks,           # lista di PDF/benchmark di origine
+            "description": rep_description,           # descrizione presa dal YAML (del primo)
+            "status": status,
+            "violated_rules": rep_rule_ids,           # chiave canonica usata per la deduplica
+            "affected_resources": sorted(affected),
+            "sources": sources,                        # mapping control_id <-> framework
+        })
+
+    # Controlli finali = eccezioni (non deduplicati) + controlli (deduplicati o singoli)
+    final_controls = passthrough + dedup_controls
+
     out_doc = {
         "framework": global_framework,
-        "controls": controls_out,
+        "controls": final_controls,
     }
 
     json.dump(out_doc, open(out_path, "w", encoding="utf-8"),

@@ -1,8 +1,5 @@
 # Uso:
 #   python risk_scorer.py inventory.json report.json compliance.json risk.json
-#
-# Se non vuoi usare la compliance, puoi passare "-" al posto di compliance.json:
-#   python risk_scorer.py inventory.json report.json - risk.json
 
 import json
 import sys
@@ -124,9 +121,41 @@ def main(inventory_path: str, findings_path: str, compliance_path: str, out_path
     if compliance_path and compliance_path != "-":
         try:
             compliance_doc = json.load(open(compliance_path, encoding="utf-8"))
-            controls = compliance_doc.get("controls", [])
-            total_controls = len(controls) if controls is not None else 0
-            failed_controls = sum(1 for c in controls if c.get("status") == "FAIL")
+            controls = compliance_doc.get("controls", []) or []
+
+            # Deduplica di sicurezza anche qui (nel caso arrivi un compliance.json non deduplicato)
+            DEDUP_EXCEPT_RULES = {"nsg-no-internet-admin-ports"}
+
+            def key_for(c):
+                vr = tuple(sorted((c.get("violated_rules") or [])))
+                # se contiene un'eccezione -> non deduplicare, usa chiave unica per ciascun controllo
+                if any(r in DEDUP_EXCEPT_RULES for r in vr):
+                    # chiave unica: (violated_rules, control_id) per contare separatamente
+                    return ("PT", vr, c.get("control_id"))
+                # altrimenti deduplica per violated_rules
+                return ("DX", vr)
+
+            grouped = {}
+            for c in controls:
+                grouped.setdefault(key_for(c), []).append(c)
+
+            # Fusione: FAIL vince su PASS
+            dedup_controls = []
+            for _k, items in grouped.items():
+                status = "PASS"
+                for it in items:
+                    if it.get("status") == "FAIL":
+                        status = "FAIL"
+                        break
+                # prendo il primo come rappresentante estetico
+                rep = items[0]
+                rep_out = dict(rep)
+                rep_out["status"] = status
+                dedup_controls.append(rep_out)
+
+            total_controls = len(dedup_controls)
+            failed_controls = sum(1 for c in dedup_controls if c.get("status") == "FAIL")
+
         except FileNotFoundError:
             compliance_doc = None
 
