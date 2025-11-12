@@ -47,7 +47,7 @@ def infer_sensitivity(tags: dict) -> float:
         if sens_val in ["medium"]:
             return 1.5
         if sens_val in ["low"]:
-            return 1.0
+            return 0.75
 
     # altrimenti inferisco dall'env
     if env_val:
