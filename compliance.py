@@ -27,6 +27,7 @@ def main(findings_path, mapping_path, out_path):
     for ctrl in controls_cfg:
         ctrl_id = ctrl["id"]
         desc = ctrl.get("description", "")
+        title = ctrl.get("title", "")
         rule_ids = ctrl.get("rules", []) or ctrl.get("rule_ids", [])
 
         # framework specifico del controllo, se presente; altrimenti quello globale del file
@@ -41,6 +42,7 @@ def main(findings_path, mapping_path, out_path):
         controls_out.append({
             "control_id": ctrl_id,
             "framework": ctrl_framework,          # stringa come nel YAML
+            "title": title,
             "description": desc,                  # descrizione dal YAML
             "status": status,
             "violated_rules": rule_ids,
@@ -85,6 +87,7 @@ def main(findings_path, mapping_path, out_path):
         # Rappresentante: PRIMO controllo così come definito nel YAML
         rep = items[0]
         rep_description = rep.get("description", "")
+        rep_title = items[0].get("title", "")
         rep_rule_ids = list(vr_key)
 
         # Stato aggregato: FAIL se almeno uno è FAIL; risorse affette unite
@@ -122,6 +125,7 @@ def main(findings_path, mapping_path, out_path):
         dedup_controls.append({
             "control_id": merged_control_id,          # es: "CIS-2.1.5 + CIS-7.2.3"
             "framework": merged_frameworks,           # lista di PDF/benchmark di origine
+            "title": rep_title,
             "description": rep_description,           # descrizione presa dal YAML (del primo)
             "status": status,
             "violated_rules": rep_rule_ids,           # chiave canonica usata per la deduplica

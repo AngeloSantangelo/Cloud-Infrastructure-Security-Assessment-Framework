@@ -32,6 +32,7 @@ INVENTORY_FILE="inventory.json"
 FINDINGS_FILE="report.json"
 COMPLIANCE_FILE="compliance.json"
 RISK_FILE="risk.json"
+REPORTING_FILE="report.pdf"
 
 echo "==> Imposto la subscription Azure su: $SUBSCRIPTION_ID"
 az account set --subscription "$SUBSCRIPTION_ID"
@@ -64,6 +65,16 @@ python3 risk_scorer.py \
   "$FINDINGS_FILE" \
   "$COMPLIANCE_FILE" \
   "$RISK_FILE"
+
+echo
+echo "==> 6) Reporting Engine (reporting_engine.py -> $REPORTING_FILE)"
+python3 reporting_engine.py \
+  "$INVENTORY_FILE" \
+  "$RISK_FILE" \
+  "$COMPLIANCE_FILE" \
+  "$REPORTING_FILE" \
+  "remediations.yaml"
+
 
 echo
 echo "=================================================================="
