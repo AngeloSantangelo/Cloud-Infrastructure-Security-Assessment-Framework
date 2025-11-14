@@ -28,9 +28,9 @@ def main(findings_path, mapping_path, out_path):
         ctrl_id = ctrl["id"]
         desc = ctrl.get("description", "")
         title = ctrl.get("title", "")
+        remediation = ctrl.get("remediation", "")
         rule_ids = ctrl.get("rules", []) or ctrl.get("rule_ids", [])
 
-        # framework specifico del controllo, se presente; altrimenti quello globale del file
         ctrl_framework = ctrl.get("framework", global_framework)
 
         affected_resources = set()
@@ -41,15 +41,16 @@ def main(findings_path, mapping_path, out_path):
 
         controls_out.append({
             "control_id": ctrl_id,
-            "framework": ctrl_framework,          # stringa come nel YAML
+            "framework": ctrl_framework,          
             "title": title,
-            "description": desc,                  # descrizione dal YAML
+            "description": desc,                  
             "status": status,
             "violated_rules": rule_ids,
             "affected_resources": sorted(affected_resources),
+            "remediation": remediation,
         })
 
-    # === Deduplica dei "controlli logici" senza toccare il YAML =================
+    # === Deduplica dei "controlli logici"
     # Eccezioni: rule_id che NON vanno deduplicati anche se hanno lo stesso violated_rules
     # (es. NSG per porte diverse: rischi distinti)
     DEDUP_EXCEPT_RULES = {"nsg-no-internet-admin-ports"}
@@ -102,6 +103,7 @@ def main(findings_path, mapping_path, out_path):
         for it in items:
             cid = it.get("control_id", "")
             fw = it.get("framework", global_framework)
+            remediation = it.get("remediation", "")
             control_ids.append(cid)
             frameworks.append(fw)
             sources.append({"control_id": cid, "framework": fw})
@@ -123,14 +125,15 @@ def main(findings_path, mapping_path, out_path):
                 seen_fw.add(fw)
 
         dedup_controls.append({
-            "control_id": merged_control_id,          # es: "CIS-2.1.5 + CIS-7.2.3"
-            "framework": merged_frameworks,           # lista di PDF/benchmark di origine
+            "control_id": merged_control_id,          
+            "framework": merged_frameworks,           
             "title": rep_title,
-            "description": rep_description,           # descrizione presa dal YAML (del primo)
+            "description": rep_description,          
             "status": status,
-            "violated_rules": rep_rule_ids,           # chiave canonica usata per la deduplica
+            "violated_rules": rep_rule_ids,           
             "affected_resources": sorted(affected),
-            "sources": sources,                        # mapping control_id <-> framework
+            "sources": sources,                       
+            "remediation": remediation,
         })
 
     # Controlli finali = eccezioni (non deduplicati) + controlli (deduplicati o singoli)

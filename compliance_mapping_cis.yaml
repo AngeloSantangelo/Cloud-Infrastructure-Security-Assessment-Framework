@@ -17,6 +17,9 @@ controls:
       FTP is an unencrypted network protocol that transmits data—including passwords—in clear text. The use of this protocol can lead to both data and credential compromise and can present opportunities for exfiltration, persistence, and lateral movement. If FTPS is not explicitly required, the recommended setting is 'Disabled'.
     rules: 
       - "appservice-ftps-only-or-disabled"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/azure/app-service/deploy-ftp
 
   - id: "CIS-2.1.7"
     title: "Ensure 'HTTPS Only' is set to 'On'"

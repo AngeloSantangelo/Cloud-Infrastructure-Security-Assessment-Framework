@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # Uso:
-#   python reporting_engine.py inventory.json risk.json compliance.json report.pdf remediations.yaml
+#   python reporting_engine.py inventory.json risk.json compliance.json report.pdf
 
 import sys
 import json
+import re
+from xml.sax.saxutils import escape
 from io import BytesIO
 from pathlib import Path
 from datetime import datetime
@@ -28,14 +30,6 @@ def load_json(path: str):
 
 
 def load_remediations(path: str | None) -> dict:
-    """remediations.yaml (facoltativo):
-
-    rules:
-      - id: "storage-public-container"
-        remediation: "Disable public access..."
-      - id: "nsg-no-internet-admin-ports"
-        remediation: "Restrict SSH/RDP..."
-    """
     if not path:
         return {}
     p = Path(path)
@@ -59,6 +53,35 @@ def human_datetime(iso_str: str | None) -> str:
         return dt.strftime("%Y-%m-%d %H:%M:%S")
     except Exception:
         return iso_str
+
+URL_RE = re.compile(r"(https?://\S+)")
+
+
+def remediation_to_html(text: str) -> str:
+    """Converte il testo remediation in paragrafo HTML con link cliccabili."""
+    if not text:
+        return "Remediation TBD."
+
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    chunks = []
+
+    for ln in lines:
+        # prima escape di tutto
+        esc = escape(ln)
+
+        # poi sostituisco le URL con <a href="...">...</a>
+        def repl(m):
+            url = m.group(1)
+            # qui NON escape, vogliamo il tag <a>
+            return f'<a href="{url}">{url}</a>'
+
+        html_line = URL_RE.sub(repl, esc)
+        chunks.append(html_line)
+
+    # ogni riga separata da <br/> per leggibilità
+    return "<br/>".join(chunks)
+
+
 
 def make_risk_gauge(score_percent: float, title: str = "", grade: str | None = None) -> BytesIO | None:
     """Semicerchio stile tachimetro (0–100%) orientato correttamente."""
@@ -350,7 +373,8 @@ def main(inventory_path: str, risk_path: str, compliance_path: str,
                 fw_name = src.get("framework") or "Unknown"
                 ctrl_id = src.get("control_id") or c.get("control_id")
                 desc = src.get("description") or c.get("description")
-                title = src.get("title") or c.get("title") 
+                title = src.get("title") or c.get("title")
+                remediation = c.get("remediation")
 
                 entry = by_framework.setdefault(fw_name, [])
                 entry.append({
@@ -360,6 +384,7 @@ def main(inventory_path: str, risk_path: str, compliance_path: str,
                     "status": c.get("status", "UNKNOWN"),
                     "affected_count": len(c.get("affected_resources") or []),
                     "violated_rules": c.get("violated_rules") or [],
+                    "remediation": remediation,
                 })
         else:
             # fallback: vecchio comportamento (nessun "sources")
@@ -379,6 +404,7 @@ def main(inventory_path: str, risk_path: str, compliance_path: str,
                     "status": c.get("status", "UNKNOWN"),
                     "affected_count": len(c.get("affected_resources") or []),
                     "violated_rules": c.get("violated_rules") or [],
+                    "remediation": c.get("remediation"),
                 })
 
     fw_list = []
@@ -696,16 +722,20 @@ def main(inventory_path: str, risk_path: str, compliance_path: str,
 
             title = c.get("title") or ""
             description = c.get("description") or "No description available."
-            remediation = "Remediation TBD."  # in futuro: legata a un yaml di remediation
+            remediation_raw = c.get("remediation") or ""
 
             if title:
                 header = f"{control_id} — {title}"
             else:
                 header = control_id
+            
+            header_esc = escape(header)
+            desc_esc = escape(description)
+            remediation_html = remediation_to_html(remediation_raw)
 
-            story.append(Paragraph(f"<b>{header}</b>", styles["NormalBold"]))
-            story.append(Paragraph(f"<b>Description:</b> {description}", styles["Small"]))
-            story.append(Paragraph(f"<b>Remediation:</b> {remediation}", styles["Small"]))
+            story.append(Paragraph(f"<b>{header_esc}</b>", styles["NormalBold"]))
+            story.append(Paragraph(f"<b>Description:</b> {desc_esc}", styles["Small"]))
+            story.append(Paragraph(f"<b>Remediation:</b> {remediation_html}", styles["Small"]))
             story.append(Spacer(1, 6))
 
         # spazio extra tra un framework e il successivo
