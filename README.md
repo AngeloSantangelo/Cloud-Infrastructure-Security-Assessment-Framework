@@ -5,6 +5,7 @@ Il presente lavoro presenta un framework per la valutazione di sicurezza delle c
 - **Compliance Benchmark Evaluator**: aggregazione dei findings rispetto a un benchmark di riferimento (CIS Microsoft Azure Benchmark) e generazione di un report di compliance.
 - **Risck Scorer**: calcolatore punteggio di rischio del Resource Group.
 - **Reporting Engine**: aggregazione di risultati e creazione di un report pronto per l'utente.
+
 L’**obiettivo** è automatizzare la discovery e il controllo delle principali misconfigurations che espongono l’ambiente a rischi (es. porte aperte, firewall permissivi, password deboli, ecc.).
 
 ## Architettura
