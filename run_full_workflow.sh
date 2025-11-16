@@ -73,8 +73,6 @@ python3 reporting_engine.py \
   "$RISK_FILE" \
   "$COMPLIANCE_FILE" \
   "$REPORTING_FILE" \
-  "remediations.yaml"
-
 
 echo
 echo "=================================================================="
@@ -84,4 +82,5 @@ echo "  - $INVENTORY_FILE   (inventario Azure)"
 echo "  - $FINDINGS_FILE    (risultati Configuration Analyzer)"
 echo "  - $COMPLIANCE_FILE  (stato CIS PASS/FAIL per controllo)"
 echo "  - $RISK_FILE        (punteggio di rischio complessivo)"
+echo "  - $REPORTING_FILE   (report PDF pronto per l'utente)"
 echo "=================================================================="
