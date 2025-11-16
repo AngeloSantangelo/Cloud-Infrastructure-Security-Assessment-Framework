@@ -24,7 +24,7 @@ SUBSCRIPTION_ID="$1"
 # Resource group
 RESOURCE_GROUP="rg-miscfg-lab"
 
-# File di output, ora dentro alle rispettive cartelle modulo
+# File di output
 INVENTORY_FILE="inventory_collector/inventory.json"
 FINDINGS_FILE="configuration_analyzer/report.json"
 COMPLIANCE_FILE="compliance_benchmark_evaluator/compliance.json"

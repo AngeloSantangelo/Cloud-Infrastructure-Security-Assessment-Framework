@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 set -euo pipefail
 
 # === Parametri personalizzabili =================================================
@@ -162,7 +161,7 @@ az sql server update -g "$RG" -n "$SQL" --enable-public-network true -o table ||
 az sql server firewall-rule create -g "$RG" -s "$SQL" -n "AllowAll" \
   --start-ip-address 0.0.0.0 --end-ip-address 255.255.255.255 -o table
 
-# 7.5 Database con tag (questo comando invece supporta --tags, e l'hai già usato correttamente)
+# 7.5 Database con tag
 az sql db create -g "$RG" -s "$SQL" -n "$DB" \
   --service-objective Basic \
   --tags $TAGS_PROD_CRIT -o table || \

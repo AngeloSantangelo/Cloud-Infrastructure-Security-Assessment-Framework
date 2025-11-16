@@ -1,12 +1,9 @@
-# Uso:
-#   python risk_scorer.py inventory.json report.json compliance.json risk.json
-
 import json
 import sys
 from datetime import datetime, timezone
 
 # ---------------------------------------------------------------------
-# Pesi di severità (dal PDF della tesi)
+# Pesi di severità
 # ---------------------------------------------------------------------
 SEVERITY_WEIGHTS = {
     "critical": 10,
@@ -22,18 +19,15 @@ MAX_SENSITIVITY = 2.0       # env=prod
 # Calcolo della sensibilità della risorsa a partire dai tag
 # ---------------------------------------------------------------------
 def infer_sensitivity(tags: dict) -> float:
-    """Determina quanto 'vale' la risorsa (resource sensitivity) dai tag."""
     if not isinstance(tags, dict):
         return 1.0
 
-    # prova a leggere env / environment / ENV ecc.
     env_val = None
     for key in ["env", "environment", "Environment", "ENV", "Env"]:
         if key in tags and tags[key]:
             env_val = str(tags[key]).lower()
             break
 
-    # opzionale: tag esplicito di sensitivity
     sens_val = None
     for key in ["sensitivity", "Sensitivity", "data_classification"]:
         if key in tags and tags[key]:
@@ -63,11 +57,6 @@ def infer_sensitivity(tags: dict) -> float:
 
 
 def get_effective_tags(resource_id: str, item_by_id: dict) -> dict:
-    """
-    Ritorna i tag 'effettivi' della risorsa.
-    Se la risorsa non ha tag, prova a risalire l'albero dell'ID
-    e a usare i tag del primo genitore che ne ha.
-    """
     # 1) Provo prima i tag diretti della risorsa
     item = item_by_id.get(resource_id)
     if item:
@@ -123,23 +112,18 @@ def main(inventory_path: str, findings_path: str, compliance_path: str, out_path
             compliance_doc = json.load(open(compliance_path, encoding="utf-8"))
             controls = compliance_doc.get("controls", []) or []
 
-            # Deduplica di sicurezza anche qui (nel caso arrivi un compliance.json non deduplicato)
             DEDUP_EXCEPT_RULES = {"nsg-no-internet-admin-ports"}
 
             def key_for(c):
                 vr = tuple(sorted((c.get("violated_rules") or [])))
-                # se contiene un'eccezione -> non deduplicare, usa chiave unica per ciascun controllo
                 if any(r in DEDUP_EXCEPT_RULES for r in vr):
-                    # chiave unica: (violated_rules, control_id) per contare separatamente
                     return ("PT", vr, c.get("control_id"))
-                # altrimenti deduplica per violated_rules
                 return ("DX", vr)
 
             grouped = {}
             for c in controls:
                 grouped.setdefault(key_for(c), []).append(c)
 
-            # Fusione: FAIL vince su PASS
             dedup_controls = []
             for _k, items in grouped.items():
                 status = "PASS"
@@ -147,7 +131,7 @@ def main(inventory_path: str, findings_path: str, compliance_path: str, out_path
                     if it.get("status") == "FAIL":
                         status = "FAIL"
                         break
-                # prendo il primo come rappresentante estetico
+
                 rep = items[0]
                 rep_out = dict(rep)
                 rep_out["status"] = status
@@ -220,7 +204,6 @@ def main(inventory_path: str, findings_path: str, compliance_path: str, out_path
 
         score_percent = base_percent
 
-        # amplifico leggermente se falliscono molti controlli CIS
         if compliance_doc and total_controls:
             fail_ratio = (failed_controls or 0) / float(total_controls)
             # massimo +50% se tutti i controlli sono FAIL
@@ -228,7 +211,7 @@ def main(inventory_path: str, findings_path: str, compliance_path: str, out_path
             if score_percent > 100.0:
                 score_percent = 100.0
 
-    # 7) Risk grade (stringa da usare nel report)
+    # 7) Risk grade
     if score_percent < 20:
         grade = "Low"
     elif score_percent < 40:
@@ -264,7 +247,6 @@ def main(inventory_path: str, findings_path: str, compliance_path: str, out_path
 
 if __name__ == "__main__":
     if len(sys.argv) != 5:
-        print("Uso: python risk_scorer.py <inventory.json> <findings.json> <compliance.json|- > <out.json>")
         sys.exit(1)
 
     inventory_path = sys.argv[1]

@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-# Uso:
-#   python reporting_engine.py inventory.json risk.json compliance.json report.pdf
-
 import sys
 import json
 import re
@@ -58,7 +54,6 @@ URL_RE = re.compile(r"(https?://\S+)")
 
 
 def remediation_to_html(text: str) -> str:
-    """Converte il testo remediation in paragrafo HTML con link cliccabili."""
     if not text:
         return "Remediation TBD."
 
@@ -66,30 +61,23 @@ def remediation_to_html(text: str) -> str:
     chunks = []
 
     for ln in lines:
-        # prima escape di tutto
         esc = escape(ln)
-
-        # poi sostituisco le URL con <a href="...">...</a>
         def repl(m):
             url = m.group(1)
-            # qui NON escape, vogliamo il tag <a>
             return f'<a href="{url}">{url}</a>'
 
         html_line = URL_RE.sub(repl, esc)
         chunks.append(html_line)
 
-    # ogni riga separata da <br/> per leggibilità
     return "<br/>".join(chunks)
 
 
-
 def make_risk_gauge(score_percent: float, title: str = "", grade: str | None = None) -> BytesIO | None:
-    """Semicerchio stile tachimetro (0–100%) orientato correttamente."""
     if score_percent is None:
         return None
 
-    v = max(0.0, min(float(score_percent), 100.0))  # clamp 0-100
-    angle = 180.0 * v / 100.0                       # quanto riempire
+    v = max(0.0, min(float(score_percent), 100.0))
+    angle = 180.0 * v / 100.0
 
     # colori
     if v < 20:
@@ -104,15 +92,12 @@ def make_risk_gauge(score_percent: float, title: str = "", grade: str | None = N
     fig, ax = plt.subplots(figsize=(4, 2.2), subplot_kw={"aspect": "equal"})
     ax.axis("off")
 
-    #
-    # Semicerchio di sfondo GRIGIO (da 180° a 0°)
-    #
     bg = Wedge(
     (0, 0),
     1.0,
-    180,          # inizio sinistra
-    0,            # fine destra
-    facecolor="#e5e7eb",   # 👈 deve essere chiaro, NON arancione
+    180,
+    0,
+    facecolor="#e5e7eb",
     edgecolor="#9ca3af",
     linewidth=1,
     )
@@ -124,9 +109,9 @@ def make_risk_gauge(score_percent: float, title: str = "", grade: str | None = N
     fg = Wedge(
     (0, 0),
     1.0,
-    180,          # inizio sempre da sinistra
-    180 - angle,  # fine proporzionale
-    facecolor=color,       # 👈 arancione/verde/rosso
+    180,
+    180 - angle,
+    facecolor=color,
     edgecolor=color,
     linewidth=1,
     )
@@ -181,10 +166,9 @@ def make_risk_gauge(score_percent: float, title: str = "", grade: str | None = N
 
 
 def _short_framework_name(name: str) -> str:
-    """Abbreviazione carina per i nomi framework da usare nel grafico."""
     if not name:
         return "Unknown"
-    # es: "CIS Microsoft Azure Foundations v5.0.0" -> "Foundations v5.0.0"
+    
     if "Azure" in name:
         try:
             part = name.split("Azure", 1)[1].strip()
@@ -195,7 +179,6 @@ def _short_framework_name(name: str) -> str:
 
 
 def make_framework_compliance_chart(fw_list: list[dict]) -> BytesIO | None:
-    """Bar chart: numero di controlli FAIL per framework."""
     labels = []
     values = []
 
@@ -246,7 +229,7 @@ def make_bar_chart(labels, values, title: str) -> BytesIO | None:
 
 def build_styles():
     styles = getSampleStyleSheet()
-    # aumenta leggermente il font base
+
     styles["Normal"].fontSize = 12       
     styles["Normal"].leading = 14
     styles.add(ParagraphStyle(
@@ -357,7 +340,6 @@ def main(inventory_path: str, risk_path: str, compliance_path: str,
     # --- Compliance summary ---------------------------------------------
     controls = compliance_doc.get("controls") or []
 
-    # Per il conteggio totale/pass/fail usiamo ancora il livello "aggregato"
     total_controls = len(controls)
     fail_count = sum(1 for c in controls if c.get("status") == "FAIL")
     pass_count = sum(1 for c in controls if c.get("status") == "PASS")
@@ -387,7 +369,7 @@ def main(inventory_path: str, risk_path: str, compliance_path: str,
                     "remediation": remediation,
                 })
         else:
-            # fallback: vecchio comportamento (nessun "sources")
+            # fallback: comportamento senza "sources"
             fw_val = c.get("framework")
             if isinstance(fw_val, list):
                 frameworks = fw_val
@@ -409,36 +391,29 @@ def main(inventory_path: str, risk_path: str, compliance_path: str,
 
     fw_list = []
     for name, ctrls in sorted(by_framework.items(), key=lambda x: x[0]):
-        # merge per control_id dentro lo stesso framework
         merged: dict[str, dict] = {}
 
         for c in ctrls:
             cid = c.get("control_id") or "Unknown"
             if cid not in merged:
-                # prima volta che vediamo questo control_id
                 merged[cid] = dict(c)
             else:
-                # uniamo le informazioni
                 m = merged[cid]
 
-                # se una delle occorrenze è FAIL, il control resta FAIL
                 if c.get("status") == "FAIL":
                     m["status"] = "FAIL"
 
-                # affected_count: prendiamo il massimo (o potresti fare la somma, se preferisci)
                 m["affected_count"] = max(
                     m.get("affected_count", 0),
                     c.get("affected_count", 0),
                 )
 
-                # violated_rules: unione dei set
                 vr1 = set(m.get("violated_rules") or [])
                 vr2 = set(c.get("violated_rules") or [])
                 m["violated_rules"] = sorted(vr1.union(vr2))
                 if not m.get("title") and c.get("title"):
                     m["title"] = c["title"]
 
-                # description: tieni la prima non vuota (di solito identica)
                 if not m.get("description") and c.get("description"):
                     m["description"] = c["description"]
 
@@ -470,7 +445,6 @@ def main(inventory_path: str, risk_path: str, compliance_path: str,
 
     fw_comp_buf = make_framework_compliance_chart(fw_list)
 
-    # --- Context per testi ----------------------------------------------
     inv_ctx = {
         "subscription_id": inventory.get("subscription_id"),
         "resource_group": inventory.get("resource_group"),
@@ -756,7 +730,6 @@ def main(inventory_path: str, risk_path: str, compliance_path: str,
 
 if __name__ == "__main__":
     if len(sys.argv) < 5:
-        print("Uso: python reporting_engine.py <inventory.json> <risk.json> <compliance.json> <out.pdf> [remediations.yaml]")
         sys.exit(1)
 
     inventory_path = sys.argv[1]

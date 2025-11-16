@@ -1,14 +1,12 @@
-#!/usr/bin/env bash
 set -euo pipefail
 
 # Se presente, carica l'env generato in creazione
 if [[ -f ".lab_env_${RG:-rg-miscfg-lab}.sh" ]]; then
-  # shellcheck disable=SC1090
   source ".lab_env_${RG:-rg-miscfg-lab}.sh"
 fi
 
 RG="${RG:-rg-miscfg-lab}"
-NOWAIT="${NOWAIT:-true}"   # impostalo a false se vuoi attendere
+NOWAIT="${NOWAIT:-true}"
 
 echo "==> Verifica Azure CLI / login"
 command -v az >/dev/null 2>&1 || { echo "Azure CLI (az) non trovato."; exit 1; }

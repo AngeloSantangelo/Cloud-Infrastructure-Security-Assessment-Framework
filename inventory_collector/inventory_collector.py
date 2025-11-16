@@ -71,13 +71,12 @@ def _split_provider_type(resource_type: str) -> Tuple[str, str]:
 
 @retry
 def resolve_api_version(res_client: ResourceManagementClient, full_type: str) -> str:
-    """Resolve a good apiVersion for the given resource type (prefer stable)."""
-    key = (res_client._config.subscription_id, full_type.lower())  # type: ignore[attr-defined]
+    key = (res_client._config.subscription_id, full_type.lower())
     cached = API_CACHE.get(key)
     if cached:
         return cached
     provider, path = _split_provider_type(full_type)
-    prov = res_client.providers.get(provider)  # type: ignore[arg-type]
+    prov = res_client.providers.get(provider)
 
     best: Optional[str] = None
     best_preview: Optional[str] = None
@@ -95,9 +94,9 @@ def resolve_api_version(res_client: ResourceManagementClient, full_type: str) ->
     segments = path.split("/")
     for i in range(len(segments), 0, -1):
         needle = "/".join(segments[:i]).lower()
-        for rt in prov.resource_types:  # type: ignore[attr-defined]
+        for rt in prov.resource_types:
             if rt.resource_type.lower() == needle:
-                s, p = pick(list(rt.api_versions or []))  # type: ignore[arg-type]
+                s, p = pick(list(rt.api_versions or []))
                 best = best or s
                 best_preview = best_preview or p
                 if best:
@@ -108,7 +107,7 @@ def resolve_api_version(res_client: ResourceManagementClient, full_type: str) ->
         return best_preview
 
     all_versions: List[str] = []
-    for rt in prov.resource_types:  # type: ignore[attr-defined]
+    for rt in prov.resource_types:
         all_versions.extend(list(rt.api_versions or []))
     if all_versions:
         all_versions.sort(reverse=True)
@@ -144,7 +143,6 @@ def fetch_raw_by_id(res_client: ResourceManagementClient, resource_id: str, reso
 # -----------------------------------------------------------------------------
 def _parse_rg_and_name_from_id(resource_id: str) -> Tuple[str, str]:
     parts = resource_id.split("/")
-    # /subscriptions/<sub>/resourceGroups/<rg>/providers/<Provider>/<Type>/<name>
     rg = parts[4]
     name = parts[-1]
     return rg, name
