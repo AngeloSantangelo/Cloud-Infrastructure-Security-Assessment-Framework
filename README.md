@@ -25,6 +25,7 @@ pip install -r requirements.txt
 
 ```
 ## Descrizione dei File
+Ogni cartella rappresenta un modulo del Framework contenente i corrispondenti file di codice per la loro operatività.
 - **create_lab.sh**: rappresenta il file per automatizzare il provisioning dell'infrastruttura (creazione del Resource Group su Azure)
 - **unistall.sh**: rappresenta il file per automatizzare il de-provisioning dell'infrastruttura.
 - **inventory_collector.py**: rappresenta l'Inventory Collector. Enumera tutte le risorse, con le relative proprietà e configurazioni, sottoforma di inventario JSON.
@@ -33,6 +34,7 @@ pip install -r requirements.txt
 - **compliance_mapping_cis.yaml**: rappresenta il file contenente le regole esistenti nel benchmark "CIS Microsoft Azure Benchmark" corrispondenti alle regole YAML nel file "rules.yaml".
 - **compliance.py**: rappresenta il Compliance Benchmark Evaluator, il modulo che valuta la mappatura delle regole YAML con le regole del benchmark CIS.
 - **risk_scorer.py**: rappresenta il Risk Scorer, il modulo che, sulla base delle configurazioni raccolte circa le risorse Azure, calcola un punteggio di rischio riguardo l'ambiente.
+- **reporting_engine.py**: rappresenta il Reporting Engine, il modulo che raccoglie tutti i risultati e li aggrega in un unico file PDF pronto per l'utente.
 
 ## Clonazione del Progetto e Configurazione dell'infrastruttura di Azure
 Per iniziare, clona il repository sul tuo Computer locale utilizzando il comando `git clone` nel seguente modo:
