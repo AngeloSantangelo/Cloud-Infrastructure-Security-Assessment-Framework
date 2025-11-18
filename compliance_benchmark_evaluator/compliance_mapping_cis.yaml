@@ -28,6 +28,10 @@ controls:
       Azure App Service allows apps to run under both HTTP and HTTPS by default. Enabling HTTPS-only traffic will redirect all non-secure HTTP requests to HTTPS ports. HTTPS uses the TLS/SSL protocol to provide a secure connection which is both encrypted and authenticated. It is therefore important to support HTTPS for the security benefits.
     rules:
       - "appservice-https-only"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://techcommunity.microsoft.com/blog/azurepaasblog/enable-https-setting-on-azure-app-service-using-azure-policy/3286603
+
 
   - id: "CIS-7.1"
     title: "Ensure that RDP access from the Internet is evaluated and restricted"
@@ -36,6 +40,9 @@ controls:
       The potential security problem with using RDP over the Internet is that attackers can use various brute force techniques to gain access to Azure Virtual Machines. Once the attackers gain access, they can use a virtual machine as a launch point for compromising other machines on an Azure Virtual Network or even attack networked devices outside of Azure. Where RDP is not explicitly required and narrowly configured for resources attached to a network security group, Internet-level access to Azure resources should be restricted or eliminated.
     rules:
       - "nsg-no-internet-admin-ports"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/azure/security/fundamentals/network-best-practices#disable-rdpssh-access-to-virtual-machines
 
   - id: "CIS-7.2"
     title: "Ensure that SSH access from the Internet is evaluated and restricted"
@@ -44,14 +51,20 @@ controls:
       The potential security problem with using SSH over the Internet is that attackers can use various brute force techniques to gain access to Azure Virtual Machines. Once the attackers gain access, they can use a virtual machine as a launch point for compromising other machines on the Azure Virtual Network or even attack networked devices outside of Azure. Where SSH is not explicitly required and narrowly configured for resources attached to a network security group, Internet-level access to Azure resources should be restricted or eliminated.
     rules:
       - "nsg-no-internet-admin-ports"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/azure/security/fundamentals/network-best-practices#disable-rdpssh-access-to-virtual-machines
 
-  - id: "CIS-7.3"
+  - id: "CIS-7.4"
     title: "Ensure that HTTP access from the Internet is evaluated and restricted"
     framework: "CIS Microsoft Azure Foundations v5.0.0"
     description: >
       The potential security problem with using HTTP(S) over the Internet is that attackers can use various brute force techniques to gain access to Azure resources. Once the attackers gain access, they can use the resource as a launch point for compromising other resources within the Azure tenant. Where HTTP(S) is not explicitly required and narrowly configured for resources attached to a network security group, Internet-level access to Azure resources should be restricted or eliminated.
     rules:
       - "nsg-no-internet-admin-ports"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/azure/expressroute/
 
   - id: "CIS-8.3.7"
     title: "Ensure Public Network Access is Disabled"
@@ -60,6 +73,9 @@ controls:
       Disabling public network access improves security by ensuring that a service is not exposed on the public internet. Removing a point of interconnection from the internet edge to your key vault can strengthen the network security boundary of your system and reduce the risk of exposing the control plane or vault objects to untrusted clients. Although Azure resources are never truly isolated from the public internet, disabling the public endpoint removes a line of sight from the public internet and increases the effort required for an attack. When a private endpoint is configured on a key vault, connections from Azure resources within the same subnet will use its private IP address. However, network traffic from the public internet can still connect to the key vault's public endpoint (mykeyvault.vault.azure.net) using its public IP address unless public network access is disabled. Disabling public network access removes the vault's public endpoint from Azure public DNS, reducing its exposure to the public internet. With a private endpoint configured, network traffic will use the vault's private endpoint IP address for all requests (mykeyvault.vault.privatelink.azure.net).
     rules:
       - "keyvault-disable-public-network"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/azure/key-vault/general/network-security
 
   - id: "CIS-17.13"
     title: "Ensure that 'Allow Blob Anonymous Access' is set to 'Disabled'"
@@ -68,6 +84,9 @@ controls:
       If "Allow Blob Anonymous Access" is enabled, blobs can be accessed by adding the blob name to the URL to see the contents. An attacker can enumerate a blob using methods, such as brute force, and access them. Exfiltration of data by brute force enumeration of items from a storage account may occur if this setting is set to 'Enabled'.
     rules:
       - "storage-disable-blob-anonymous"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/azure/storage/blobs/anonymous-read-access-prevent?tabs=portal
 
   - id: "CIS-9.3.8"
     title: "Ensure that 'Allow Blob Anonymous Access' is set to 'Disabled'"
@@ -76,6 +95,9 @@ controls:
       If "Allow Blob Anonymous Access" is enabled, blobs can be accessed by adding the blob name to the URL to see the contents. An attacker can enumerate a blob using methods, such as brute force, and access them. Exfiltration of data by brute force enumeration of items from a storage account may occur if this setting is set to 'Enabled'.
     rules:
       - "storage-disable-blob-anonymous"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/azure/storage/blobs/anonymous-read-access-prevent?tabs=portal
 
   - id: "CIS-9.3.6"
     title: "Ensure the 'Minimum TLS version' for storage accounts is set to 'Version 1.2'"
@@ -84,6 +106,9 @@ controls:
       In some cases, Azure Storage sets the minimum TLS version to be version 1.0 by default. TLS 1.0 has known vulnerabilities and has been replaced by later versions of the TLS protocol. Continued use of this legacy protocol affects the security of data in transit.
     rules:
       - "storage-minimum-tls-1_2"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/azure/storage/common/transport-layer-security-configure-minimum-version?tabs=portal
 
   - id: "CIS-17.11"
     title: "Ensure the 'Minimum TLS version' for storage accounts is set to 'Version 1.2'"
@@ -92,6 +117,9 @@ controls:
       In some cases, Azure Storage sets the minimum TLS version to be version 1.0 by default. TLS 1.0 has known vulnerabilities and has been replaced by later versions of the TLS protocol. Continued use of this legacy protocol affects the security of data in transit.
     rules:
       - "storage-minimum-tls-1_2"    
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/azure/storage/common/transport-layer-security-configure-minimum-version?tabs=portal
     
   - id: "CIS-17.4"
     framework: "CIS Microsoft Azure Storage Services v1.0.0"
@@ -100,6 +128,9 @@ controls:
       The secure transfer option enhances the security of a storage account by only allowing requests to the storage account by a secure connection. For example, when calling REST APIs to access storage accounts, the connection must use HTTPS. Any requests using HTTP will be rejected when 'secure transfer required' is enabled. When using the Azure files service, connection without encryption will fail, including scenarios using SMB 2.1, SMB 3.0 without encryption, and some flavors of the Linux SMB client. Because Azure storage doesn't support HTTPS for custom domain names, this option is not applied when using a custom domain name.
     rules:
       - "storage-secure-transfer-required"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/azure/storage/blobs/security-recommendations#encryption-in-transit
       
   - id: "CIS-10.2"
     framework: "CIS Microsoft Azure Database Services v1.0.0"
@@ -108,3 +139,6 @@ controls:
       Azure SQL Server includes a firewall to block access to unauthorized connections. More granular IP addresses can be defined by referencing the range of addresses available from specific datacenters. By default, for a SQL server, a Firewall exists with StartIp of 0.0.0.0 and EndIP of 0.0.0.0 allowing access to all the Azure services. Additionally, a custom rule can be set up with StartIp of 0.0.0.0 and EndIP of 255.255.255.255 allowing access from ANY IP over the Internet. In order to reduce the potential attack surface for a SQL server, firewall rules should be defined with more granular IP addresses by referencing the range of addresses available from specific datacenters.
     rules:
       - "sql-fw-allow-all"
+    remediation: >
+       Refer to the official Microsoft documentation for detailed remediation steps:
+       https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/configure-a-windows-firewall-for-database-engine-access?view=sql-server-2017
