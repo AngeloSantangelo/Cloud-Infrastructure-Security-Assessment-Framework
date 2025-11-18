@@ -57,6 +57,8 @@ def remediation_to_html(text: str) -> str:
     if not text:
         return "Remediation TBD."
 
+    text = re.sub(r"(steps:?)(\s+)(https?://\S+)", r"\1\n\3", text, flags=re.IGNORECASE)
+    
     lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
     chunks = []
 
