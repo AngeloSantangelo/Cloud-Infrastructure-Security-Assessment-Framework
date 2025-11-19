@@ -35,15 +35,15 @@ REPORTING_FILE="reporting_engine/report.pdf"
 RULES_FILE="configuration_analyzer/rules.yaml"
 COMPLIANCE_MAPPING_FILE="compliance_benchmark_evaluator/compliance_mapping_cis.yaml"
 
-echo "==> Imposto la subscription Azure su: $SUBSCRIPTION_ID"
-az account set --subscription "$SUBSCRIPTION_ID"
+# echo "==> Imposto la subscription Azure su: $SUBSCRIPTION_ID"
+# az account set --subscription "$SUBSCRIPTION_ID"
 
-echo
-echo "==> 2) Raccolta inventario Azure (inventory_collector/inventory_collector.py)"
-python3 inventory_collector/inventory_collector.py \
-  --subscription-id "$SUBSCRIPTION_ID" \
-  --resource-group "$RESOURCE_GROUP" \
-  --output "$INVENTORY_FILE"
+# echo
+# echo "==> 2) Raccolta inventario Azure (inventory_collector/inventory_collector.py)"
+# python3 inventory_collector/inventory_collector.py \
+#   --subscription-id "$SUBSCRIPTION_ID" \
+#   --resource-group "$RESOURCE_GROUP" \
+#   --output "$INVENTORY_FILE"
 
 echo
 echo "==> 3) Configuration Analyzer (configuration_analyzer/validate.py -> $FINDINGS_FILE)"
